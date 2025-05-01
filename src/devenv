@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 
-DEVENV_PATH=$(readlink -f $0)
-DEVENV_DIR=$(dirname $DEVENV_PATH)
+devenv_path=$(readlink -f $0)
+devenv_dir=$(dirname $devenv_path)
 
-source "$DEVENV_DIR/tui"
+#source "$devenv_dir/tui"
+
+declare -A commands
+commands[apply]="apply"
+
+selected_command=$1
+
+if [ -v commands[$selected_command] ]; then
+    $devenv_dir/${commands[$selected_command]}
+else
+    echo "Unknown command \"$selected_command\""
+fi
