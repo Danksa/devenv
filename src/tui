@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+function draw() {
+    tput clear
+    echo "Size $(tput cols)x$(tput lines)"
+}
+
+trap 'draw' WINCH
+
+draw
+
+while true; do
+    :
+done
