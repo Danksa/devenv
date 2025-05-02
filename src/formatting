@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+
+
+function title() {
+    tput bold
+    echo "Title test"
+    tput sgr0
+}
+
+function path() {
+    tput setaf 3 sitm
+    echo -n $1
+    tput sgr0
+}

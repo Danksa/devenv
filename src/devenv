@@ -1,17 +1,34 @@
 #!/usr/bin/env bash
 
+function print_usage() {
+    source "$devenv_dir/formatting"
+    echo "Usage: $devenv_name <Command> [--help]"
+    echo ""
+    title "Available Commands:"
+    echo "- apply: Copies all config files to your home folder"
+    echo ""
+    title "Configuration"
+    echo "All your configuration files are expected to reside in $(path \"$devenv_config_dir\")."
+}
+
 devenv_path=$(readlink -f $0)
 devenv_dir=$(dirname $devenv_path)
+devenv_name=$(basename $devenv_path)
 
-#source "$devenv_dir/tui"
+devenv_config_dir="$HOME/.config/devenv"
 
 declare -A commands
 commands[apply]="apply"
 
-selected_command=$1
+selected_command=${1:-"--help"}
+
+if [ $selected_command == "--help" ]; then
+    print_usage
+    exit 0
+fi
 
 if [[ -v commands[$selected_command] ]]; then
     $devenv_dir/${commands[$selected_command]} ${@:2}
 else
-    echo "Unknown command \"$selected_command\""
+    echo "Unknown command \"$selected_command\". Type \"$devenv_name --help\" for help."
 fi
