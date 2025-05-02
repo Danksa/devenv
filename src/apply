@@ -55,6 +55,28 @@ function has_option() {
     echo '0'
 }
 
+function copy_config_file() {
+    config_path=$1
+    file=$2
+
+    group 1 "Applying $(path "~/$file")" -n
+
+    if [ "$dry_run" == "0" ]; then
+        copy_result=$(cp "$config_path/$file" "$HOME/$file" 2>&1)
+        if [ $? -ne 0 ]; then
+            tput setaf 1
+            echo " 🞪"
+            tput sgr0
+            group_end 0
+            exit_with_error "Error occured while copying: $copy_result"
+        fi    
+    fi
+
+    tput setaf 2
+    echo " 🗸"
+    tput sgr0
+}
+
 function copy_configs() {
     config_path="$DEVENV_CONFIG_DIR/home"
 
@@ -67,26 +89,7 @@ function copy_configs() {
     pushd "$config_path" &> /dev/null
     for entry in * .[^.]*; do
         if [ -f $entry ]; then
-            group 1 "Applying $(path "~/$entry")" -n
-
-            if [ "$dry_run" == "0" ]; then
-                copy_result=$(cp "$config_path/$entry" "$HOME/$entry" 2>&1)
-                if [ $? -eq 0 ]; then
-                    tput setaf 2
-                    echo " 🗸"
-                    tput sgr0
-                else
-                    tput setaf 1
-                    echo " 🞪"
-                    tput sgr0
-                    group_end 0
-                    exit_with_error "Error occured while copying: $copy_result"
-                fi
-            else
-                tput setaf 2
-                echo " 🗸"
-                tput sgr0
-            fi
+            copy_config_file $config_path $entry
         fi
     done
     popd &> /dev/null
