@@ -27,7 +27,7 @@ function group_start() {
 
 function group() {
     _group_prefix $1
-    echo " $2"
+    echo $3 " $2"
 }
 
 

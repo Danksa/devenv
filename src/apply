@@ -61,10 +61,10 @@ function copy_configs() {
     pushd "$config_path" &> /dev/null
     for entry in * .[^.]*; do
         if [ -f $entry ]; then
-            group 1 "Applying: ~/$entry"
+            group 1 "Applying $(path "~/$entry")" -n
 
             if [ "$dry_run" == "0" ]; then
-                cp "$config_path/$entry" "$HOME/$entry"
+                cp "$config_path/$entry" "$HOME/$entry" && (tput setaf 2; echo " 🗸"; tput sgr0) || (tput setaf 1; echo " 🞪"; tput sgr0)
             fi
         fi
     done
