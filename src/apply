@@ -1,3 +1,35 @@
 #!/usr/bin/env bash
 
-echo "Apply called! $@"
+function ensure_env() {
+    if [ -z "${!1}" ]; then
+        echo "Missing environment variable \"$1\""
+        exit 1
+    fi
+}
+
+ensure_env "DEVENV_CONFIG_DIR"
+ensure_env "DEVENV_DIR"
+ensure_env "DEVENV_NAME"
+
+source "$DEVENV_DIR/formatting"
+
+function print_usage() {
+    echo "Usage: $DEVENV_NAME apply [--help]"
+    echo ""
+    title "Summary"
+    echo "This command will apply your devenv configuration to your home directory."
+}
+
+if [ "$1" == "--help" ]; then
+    print_usage
+    exit 0
+fi
+
+
+if [ ! -d "$DEVENV_CONFIG_DIR" ]; then
+    echo "The directory $(path \"$DEVENV_CONFIG_DIR\") does not exist, nothing to apply."
+    exit 0
+fi
+
+echo "WIP: $DEVENV_CONFIG_DIR"
+

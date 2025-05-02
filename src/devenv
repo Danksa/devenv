@@ -22,12 +22,15 @@ commands[apply]="apply"
 
 selected_command=${1:-"--help"}
 
-if [ $selected_command == "--help" ]; then
+if [ "$selected_command" == "--help" ]; then
     print_usage
     exit 0
 fi
 
 if [[ -v commands[$selected_command] ]]; then
+    export DEVENV_CONFIG_DIR=$devenv_config_dir
+    export DEVENV_DIR=$devenv_dir
+    export DEVENV_NAME=$devenv_name
     $devenv_dir/${commands[$selected_command]} ${@:2}
 else
     echo "Unknown command \"$selected_command\". Type \"$devenv_name --help\" for help."
