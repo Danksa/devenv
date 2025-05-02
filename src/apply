@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
 
+function exit_with_error() {
+    error_message=$1
+    tput setaf 1
+    echo $1
+    tput sgr0
+    exit 1
+}
+
 function ensure_env() {
     if [ -z "${!1}" ]; then
-        echo "Missing environment variable \"$1\""
-        exit 1
+        exit_with_error "Missing environment variable \"$1\""
     fi
 }
 
@@ -34,8 +41,7 @@ function print_dry_run_message() {
 function has_option() {
     option_name=$1
     if [ -z $option_name ]; then
-        echo "No option name provided"
-        exit 1
+        exit_with_error "No option name provided"
     fi
 
     args=${@:2}
@@ -47,14 +53,6 @@ function has_option() {
     done
 
     echo '0'
-}
-
-function exit_with_error() {
-    error_message=$1
-    tput setaf 1
-    echo $1
-    tput sgr0
-    exit 1
 }
 
 function copy_configs() {
