@@ -8,7 +8,7 @@ function print_usage() {
     echo "- apply: Copies all config files to your home folder"
     echo ""
     title "Configuration"
-    echo "All your configuration files are expected to reside in $(path \"$devenv_config_dir\")."
+    echo "All your configuration files are expected to reside in $(path "\"$devenv_config_dir\"")."
 }
 
 devenv_path=$(readlink -f $0)

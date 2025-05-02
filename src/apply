@@ -7,29 +7,77 @@ function ensure_env() {
     fi
 }
 
+function print_usage() {
+    echo "Usage: $DEVENV_NAME apply [--help] [--dry-run]"
+    echo ""
+    title "Summary"
+    echo "This command will apply your devenv configuration to your home directory."
+    echo ""
+    title "Options"
+    echo "--dry-run: Prints everything that would be done by running this command without actually doing anything."
+    echo "--help: Shows this page"
+}
+
+function has_option() {
+    option_name=$1
+    if [ -z $option_name ]; then
+        echo "No option name provided"
+        exit 1
+    fi
+
+    args=${@:2}
+    for arg in $args; do
+        if [ "$arg" == "$option_name" ]; then
+            echo '1'
+            return 0
+        fi
+    done
+
+    echo '0'
+}
+
+function copy_configs() {
+    config_path="$DEVENV_CONFIG_DIR/home"
+
+    if [ ! -d "$config_path" ]; then
+        echo "The directory $(path "\"$config_path\"") does not exist, nothing to apply."
+        return 0
+    fi
+    group_start 0 "Applying files from $(path "\"$config_path\"")..."
+
+    pushd "$config_path" &> /dev/null
+    for entry in * .[^.]*; do
+        if [ -f $entry ]; then
+            group 1 "Applying: ~/$entry"
+
+            if [ "$dry_run" == "0" ]; then
+                cp "$config_path/$entry" "$HOME/$entry"
+            fi
+        fi
+    done
+    popd &> /dev/null
+
+    group_end 0
+}
+
 ensure_env "DEVENV_CONFIG_DIR"
 ensure_env "DEVENV_DIR"
 ensure_env "DEVENV_NAME"
 
+help=$(has_option "--help" $@)
+dry_run=$(has_option "--dry-run" $@)
+
 source "$DEVENV_DIR/formatting"
 
-function print_usage() {
-    echo "Usage: $DEVENV_NAME apply [--help]"
-    echo ""
-    title "Summary"
-    echo "This command will apply your devenv configuration to your home directory."
-}
-
-if [ "$1" == "--help" ]; then
+if [ "$help" == "1" ]; then
     print_usage
     exit 0
 fi
 
-
 if [ ! -d "$DEVENV_CONFIG_DIR" ]; then
-    echo "The directory $(path \"$DEVENV_CONFIG_DIR\") does not exist, nothing to apply."
+    echo "The directory $(path "\"$DEVENV_CONFIG_DIR\"") does not exist, nothing to apply."
     exit 0
 fi
 
-echo "WIP: $DEVENV_CONFIG_DIR"
+copy_configs
 
