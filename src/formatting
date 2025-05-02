@@ -12,30 +12,26 @@ function path() {
     tput sgr0
 }
 
-function group_start() {
+function _group_prefix() {
     depth=${1:-0}
     while [ $depth -gt 0 ]; do
         echo -n "│"
         depth=$(( $depth - 1 ))
     done
-    echo "┌── $2"
+}
+
+function group_start() {
+    _group_prefix $1
+    echo "┌── $2 ─"
 }
 
 function group() {
-    depth=${1:-0}
-    while [ $depth -gt 0 ]; do
-        echo -n "│"
-        depth=$(( $depth - 1 ))
-    done
+    _group_prefix $1
     echo " $2"
 }
 
 
 function group_end() {
-    depth=${1:-0}
-    while [ $depth -gt 0 ]; do
-        echo -n "│"
-        depth=$(( $depth - 1 ))
-    done
+    _group_prefix $1
     echo "└─"
 }
