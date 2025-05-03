@@ -46,7 +46,7 @@ function has_option() {
         exit_with_error "No option name provided"
     fi
 
-    local args=${@:2}
+    local args="${@:2}"
     for arg in $args; do
         if [ "$arg" == "$option_name" ]; then
             echo '1'
@@ -58,15 +58,14 @@ function has_option() {
 }
 
 function filter_option() {
-    local args=${@:2}
+    local args="${@:1}"
     for arg in $args; do
-        if [[ $arg == --filter=* ]]; then
+        if [[ $arg == "--filter="* ]]; then
             echo "${arg#--filter=}"
             return 0
         fi
     done
     echo ""
-    return 0
 }
 
 function matches_filter() {
@@ -74,24 +73,24 @@ function matches_filter() {
         return 0
     fi
 
-    local name=$1
+    local name="$1"
 
-    local prev_ifs=$IFS
+    local prev_ifs="$IFS"
     IFS=','
     for term in $filter; do
         if [[ $name == *"$term"* ]]; then
-            IFS=$prev_ifs
+            IFS="$prev_ifs"
             return 0
         fi
     done
-    IFS=$prev_ifs
+    IFS="$prev_ifs"
 
     return 1
 }
 
 function copy_config_file() {
-    local config_path=$1
-    local file=$2
+    local config_path="$1"
+    local file="$2"
 
     group 1 "Applying $(path "~/$file")" -n
 
@@ -117,8 +116,8 @@ function copy_config_file() {
 }
 
 function copy_configs_recursive() {
-    local config_path=$1
-    local current_path=$2
+    local config_path="$1"
+    local current_path="$2"
 
     pushd "$current_path" &> /dev/null
     for entry in * .[^.]*; do
@@ -126,7 +125,7 @@ function copy_configs_recursive() {
             relative_path=$(realpath -s --relative-to="$config_path" "$current_path/$entry")
 
             if matches_filter "$entry"; then
-                copy_config_file $config_path $relative_path
+                copy_config_file "$config_path" "$relative_path"
             else
                 group 1 "$(tput dim)Skipping $(path "~/$relative_path")"
             fi
@@ -265,6 +264,8 @@ dry_run=$(has_option "--dry-run" $@)
 run_install=$(has_option "--install" $@)
 run_all=$(has_option "--all" $@)
 filter=$(filter_option $@)
+
+echo "FILTER: $filter"
 
 source "$DEVENV_DIR/formatting"
 
