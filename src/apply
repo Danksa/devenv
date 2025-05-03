@@ -15,7 +15,7 @@ function ensure_env() {
 }
 
 function print_usage() {
-    echo "Usage: $DEVENV_NAME apply [--help] [--dry-run]"
+    echo "Usage: $DEVENV_NAME apply [--help] [--dry-run] [--install]"
     echo ""
     title "Summary"
     echo "This command will apply your devenv configuration to your home directory."
@@ -23,6 +23,7 @@ function print_usage() {
     title "Options"
     echo "--dry-run: Prints everything that would be done by running this command without actually doing anything."
     echo "--help: Shows this page"
+    echo "--install: Install packages defined in $(path "\"$DEVENV_CONFIG_DIR/packages\"")"
 }
 
 function print_dry_run_message() {
@@ -96,15 +97,122 @@ function copy_configs_recursive() {
 function copy_configs() {
     config_path="$DEVENV_CONFIG_DIR/home"
 
-    if [ ! -d "$config_path" ]; then
+    if [ ! -d $config_path ]; then
         echo "The directory $(path "\"$config_path\"") does not exist, nothing to apply."
         return 0
     fi
-    group_start 0 "Applying files from $(path "\"$config_path\"")"
+    group_start 0 "Applying files from $(path "$config_path")"
 
     copy_configs_recursive $config_path $config_path
 
     group_end 0
+}
+
+function install_package() {
+    install_prefix="$1"
+    package_manager="$2"
+    package_name="$3"
+
+    if [ "$dry_run" == "1" ]; then
+        tput setaf 2
+        echo " 🗸"
+        tput sgr0
+        return 0
+    fi
+
+    $package_manager -Q $package_name &>/dev/null
+    if [ $? -eq 0 ]; then
+        tput setaf 2
+        echo " 🗸 (already installed)"
+        tput sgr0
+        return 0
+    fi
+
+    install_result=$($install_prefix $package_manager -S --noconfirm --needed $package_name 2>&1)
+    if [ $? -eq 0 ]; then
+        tput setaf 2
+        echo " 🗸"
+        tput sgr0
+        return 0
+    else
+        tput setaf 1
+        echo " 🞪"
+        tput sgr0
+        group 2 "$(tput setaf 1)$install_result$(tput sgr0)"
+        return 1
+    fi
+}
+
+function install_packages_from_file() {
+    package_file="$1"
+    filename=$(basename $package_file)
+
+    group_start 1 "$filename"
+
+    category=""
+
+    declare -A package_managers
+    package_managers[arch]="pacman"
+    package_managers[aur]="yay"
+
+    declare -A install_prefixes
+    install_prefixes[arch]="sudo"
+    install_prefixes[aur]=""
+
+    while IFS='' read -r line || [[ -n $line ]]; do
+        if [[ $line == \#* ]] || [[ -z $line ]]; then
+            continue
+        fi
+
+        if [[ $line == \[*\] ]]; then
+            _name=${line#"["}
+            _name=${_name%"]"}
+            category=$_name
+
+            if [[ ! -v package_managers[$category] ]]; then
+                group_end 1
+                group_end 0
+                exit_with_error "Unknown category \"$category\""
+            fi
+        elif [[ -z $category ]]; then
+            group 2 "$(tput setaf 3)Ignoring \"$line\" outside category$(tput sgr0)"
+        else
+            package_name="$line"
+            group 2 "Installing: $(tput setaf 4)$package_name$(tput sgr0)" -n
+
+            install_package "${install_prefixes[$category]}" "${package_managers[$category]}" "$package_name"
+            if [ $? -ne 0 ]; then
+                group_end 1
+                group_end 0
+                exit_with_error "Could not install package \"$package_name\""
+            fi
+        fi
+    done < $package_file
+
+    group_end 1
+}
+
+function install_packages() {
+    packages_path="$DEVENV_CONFIG_DIR/packages"
+
+    if [ ! -d $packages_path ]; then
+        echo "The directory $(path "\"$packages_path\"") does not exist, no packages to install."
+        return 0
+    fi
+
+    group_start 0 "Installing packages from $(path "$packages_path")"
+
+    pushd "$packages_path" &> /dev/null
+    for entry in *; do
+        if [ -f $entry ]; then
+            install_packages_from_file "$packages_path/$entry"
+        fi
+    done
+
+    group_end 0
+    popd &> /dev/null
+
+    echo "WIP"
 }
 
 ensure_env "DEVENV_CONFIG_DIR"
@@ -132,3 +240,4 @@ if [ "$dry_run" == "1" ]; then
 fi
 
 copy_configs
+install_packages
