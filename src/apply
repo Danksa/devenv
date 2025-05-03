@@ -14,7 +14,7 @@ function ensure_env() {
 }
 
 function print_usage() {
-    echo "Usage: $DEVENV_NAME apply [--help] [--dry-run] [--install] [--all]"
+    echo "Usage: $DEVENV_NAME apply [--help] [--dry-run] [--install] [--all] [--filter=<NAMES>]"
     echo ""
     title "Summary"
     echo "This command will apply your devenv configuration to your home directory."
@@ -24,6 +24,7 @@ function print_usage() {
     echo "--help: Shows this page"
     echo "--install: Install packages defined in $(path "\"$DEVENV_CONFIG_DIR/packages\""). This skips applying config files."
     echo "--all: Will install packages as well as apply config files."
+    echo "--filter: Only apply configs which match given NAMES (comma-separated list)."
 }
 
 function print_dry_run_message() {
@@ -54,6 +55,38 @@ function has_option() {
     done
 
     echo '0'
+}
+
+function filter_option() {
+    local args=${@:2}
+    for arg in $args; do
+        if [[ $arg == --filter=* ]]; then
+            echo "${arg#--filter=}"
+            return 0
+        fi
+    done
+    echo ""
+    return 0
+}
+
+function matches_filter() {
+    if [ -z "$filter" ]; then
+        return 0
+    fi
+
+    local name=$1
+
+    local prev_ifs=$IFS
+    IFS=','
+    for term in $filter; do
+        if [[ $name == *"$term"* ]]; then
+            IFS=$prev_ifs
+            return 0
+        fi
+    done
+    IFS=$prev_ifs
+
+    return 1
 }
 
 function copy_config_file() {
@@ -91,7 +124,12 @@ function copy_configs_recursive() {
     for entry in * .[^.]*; do
         if [ -f "$entry" ]; then
             relative_path=$(realpath -s --relative-to="$config_path" "$current_path/$entry")
-            copy_config_file $config_path $relative_path
+
+            if matches_filter "$entry"; then
+                copy_config_file $config_path $relative_path
+            else
+                group 1 "$(tput dim)Skipping $(path "~/$relative_path")"
+            fi
         elif [ -d "$entry" ]; then
             copy_configs_recursive $config_path "$current_path/$entry"
         fi
@@ -226,6 +264,7 @@ help=$(has_option "--help" $@)
 dry_run=$(has_option "--dry-run" $@)
 run_install=$(has_option "--install" $@)
 run_all=$(has_option "--all" $@)
+filter=$(filter_option $@)
 
 source "$DEVENV_DIR/formatting"
 
