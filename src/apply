@@ -211,8 +211,6 @@ function install_packages() {
 
     group_end 0
     popd &> /dev/null
-
-    echo "WIP"
 }
 
 ensure_env "DEVENV_CONFIG_DIR"
@@ -221,6 +219,7 @@ ensure_env "DEVENV_NAME"
 
 help=$(has_option "--help" $@)
 dry_run=$(has_option "--dry-run" $@)
+run_install=$(has_option "--install" $@)
 
 source "$DEVENV_DIR/formatting"
 
@@ -240,4 +239,7 @@ if [ "$dry_run" == "1" ]; then
 fi
 
 copy_configs
-install_packages
+
+if [ "$run_install" == "1" ]; then
+    install_packages
+fi
