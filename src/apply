@@ -265,8 +265,6 @@ run_install=$(has_option "--install" $@)
 run_all=$(has_option "--all" $@)
 filter=$(filter_option $@)
 
-echo "FILTER: $filter"
-
 source "$DEVENV_DIR/formatting"
 
 if [ "$help" == "1" ]; then
