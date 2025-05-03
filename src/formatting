@@ -13,7 +13,7 @@ function path() {
 }
 
 function _group_prefix() {
-    depth=${1:-0}
+    local depth=${1:-0}
     while [ $depth -gt 0 ]; do
         echo -n "│"
         depth=$(( $depth - 1 ))
