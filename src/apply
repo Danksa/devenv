@@ -77,6 +77,22 @@ function copy_config_file() {
     tput sgr0
 }
 
+function copy_configs_recursive() {
+    config_path=$1
+    current_path=$2
+
+    pushd "$current_path" &> /dev/null
+    for entry in * .[^.]*; do
+        if [ -f $entry ]; then
+            relative_path=$(realpath -s --relative-to="$config_path" "$current_path/$entry")
+            copy_config_file $config_path $relative_path
+        elif [ -d $entry ]; then
+            copy_configs_recursive $config_path "$current_path/$entry"
+        fi
+    done
+    popd &> /dev/null
+}
+
 function copy_configs() {
     config_path="$DEVENV_CONFIG_DIR/home"
 
@@ -86,13 +102,7 @@ function copy_configs() {
     fi
     group_start 0 "Applying files from $(path "\"$config_path\"")"
 
-    pushd "$config_path" &> /dev/null
-    for entry in * .[^.]*; do
-        if [ -f $entry ]; then
-            copy_config_file $config_path $entry
-        fi
-    done
-    popd &> /dev/null
+    copy_configs_recursive $config_path $config_path
 
     group_end 0
 }
