@@ -14,7 +14,7 @@ function ensure_env() {
 }
 
 function print_usage() {
-    echo "Usage: $DEVENV_NAME apply [--help] [--dry-run] [--install]"
+    echo "Usage: $DEVENV_NAME apply [--help] [--dry-run] [--install] [--all]"
     echo ""
     title "Summary"
     echo "This command will apply your devenv configuration to your home directory."
@@ -22,7 +22,8 @@ function print_usage() {
     title "Options"
     echo "--dry-run: Prints everything that would be done by running this command without actually doing anything."
     echo "--help: Shows this page"
-    echo "--install: Install packages defined in $(path "\"$DEVENV_CONFIG_DIR/packages\"")"
+    echo "--install: Install packages defined in $(path "\"$DEVENV_CONFIG_DIR/packages\""). This skips applying config files."
+    echo "--all: Will install packages as well as apply config files."
 }
 
 function print_dry_run_message() {
@@ -88,10 +89,10 @@ function copy_configs_recursive() {
 
     pushd "$current_path" &> /dev/null
     for entry in * .[^.]*; do
-        if [ -f $entry ]; then
+        if [ -f "$entry" ]; then
             relative_path=$(realpath -s --relative-to="$config_path" "$current_path/$entry")
             copy_config_file $config_path $relative_path
-        elif [ -d $entry ]; then
+        elif [ -d "$entry" ]; then
             copy_configs_recursive $config_path "$current_path/$entry"
         fi
     done
@@ -208,7 +209,7 @@ function install_packages() {
 
     pushd "$packages_path" &> /dev/null
     for entry in *; do
-        if [ -f $entry ]; then
+        if [ -f "$entry" ]; then
             install_packages_from_file "$packages_path/$entry"
         fi
     done
@@ -224,6 +225,7 @@ ensure_env "DEVENV_NAME"
 help=$(has_option "--help" $@)
 dry_run=$(has_option "--dry-run" $@)
 run_install=$(has_option "--install" $@)
+run_all=$(has_option "--all" $@)
 
 source "$DEVENV_DIR/formatting"
 
@@ -242,7 +244,9 @@ if [ "$dry_run" == "1" ]; then
     print_dry_run_message
 fi
 
-copy_configs
+if [ "$run_install" == "0" ] || [ "$run_all" == "1" ]; then
+    copy_configs
+fi
 
 if [ "$run_install" == "1" ]; then
     install_packages
