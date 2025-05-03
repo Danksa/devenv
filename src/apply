@@ -124,7 +124,7 @@ function copy_configs_recursive() {
         if [ -f "$entry" ]; then
             relative_path=$(realpath -s --relative-to="$config_path" "$current_path/$entry")
 
-            if matches_filter "$entry"; then
+            if matches_filter "$relative_path"; then
                 copy_config_file "$config_path" "$relative_path"
             else
                 group 1 "$(tput dim)Skipping $(path "~/$relative_path")"
@@ -178,7 +178,7 @@ function install_package() {
         return 0
     else
         tput setaf 1
-        echo " 🞪"
+        echo " "
         tput sgr0
         group 2 "$(tput setaf 1)$install_result$(tput sgr0)"
         return 1
