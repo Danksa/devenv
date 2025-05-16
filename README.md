@@ -39,7 +39,7 @@ easyeffects
 adwaita-qt5-git
 ```
 
-Sample output:
+Sample output (every file you created inside `<devenv dir>/packages` will be one group below):
 ```
 danksa@localhost:~$ devenv install
 ┌── Installing packages from /home/danksa/.devenv/packages ─
