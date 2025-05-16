@@ -39,5 +39,29 @@ easyeffects
 adwaita-qt5-git
 ```
 
+Sample output:
+```
+danksa@localhost:~$ devenv install
+┌── Installing packages from /home/danksa/.devenv/packages ─
+│┌── audio ─
+││ Installing: pipewire 🗸 (already installed)
+││ Installing: wireplumber 🗸 (already installed)
+││ Installing: pavucontrol 🗸 (already installed)
+││ Installing: spotify-launcher 🗸 (already installed)
+││ Installing: easyeffects 🗸 (already installed)
+││ Installing: lsp-plugins 🗸 (already installed)
+│└─
+│┌── base ─
+││ Installing: btop 🗸 (already installed)
+││ Installing: git 🗸 (already installed)
+││ Installing: noto-fonts-cjk 🗸 (already installed)
+││ Installing: noto-fonts-emoji 🗸 (already installed)
+││ Installing: ttf-iosevka-nerd 🗸 (already installed)
+││ Installing: ttf-jetbrains-mono 🗸 (already installed)
+││ Installing: ttf-jetbrains-mono-nerd 🗸 (already installed)
+│└─
+└─
+```
+
 For more info you can type `devenv install --help`.
 
