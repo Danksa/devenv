@@ -10,13 +10,15 @@ To set devenv up for development run `./local-setup` to symlink `devenv` to `~/.
 
 Use `devenv --help` to get an overview over the available subcommands. All subcommands support the `--dry-run` flag to only show what would be done without actually modifying your system.
 
+The configuration files are expected to be in `~/.config/devenv/`.
+
 ### apply
 
-Will use GNU stow to apply all config files from your devenv config directory (e.g. `~/.devenv/home/`). You can use `devenv apply --help` for more info.
+Will use GNU stow to apply all config files from your devenv config directory (e.g. `~/.config/devenv/home/`). You can use `devenv apply --help` for more info.
 
 ### install
 
-Will install all packages defined in your devenv config directory (e.g. `~/.devenv/packages/`). A package file has the following format:
+Will install all packages defined in your devenv config directory (e.g. `~/.config/devenv/packages/`). A package file has the following format:
 ```
 [arch]
 # You can start a line with a '#' to write a comment
@@ -39,10 +41,10 @@ easyeffects
 adwaita-qt5-git
 ```
 
-Sample output (every file you created inside `<devenv dir>/packages` will be one group below):
+Sample output (every file you created inside `<devenv dir>/packages`):
 ```
 danksa@localhost:~$ devenv install
-┌── Installing packages from /home/danksa/.devenv/packages ─
+┌── Installing packages from /home/danksa/.config/devenv/packages ─
 │┌── audio ─
 ││ Installing: pipewire 🗸 (already installed)
 ││ Installing: wireplumber 🗸 (already installed)
