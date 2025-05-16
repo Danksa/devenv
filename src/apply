@@ -136,7 +136,36 @@ function copy_configs_recursive() {
     popd &> /dev/null
 }
 
+function ensure_stow_installed() {
+	if pacman -Q stow &> /dev/null; then
+		return 0
+	fi
+	
+	read -p "\"stow\" is currently not installed, but required by this script. Do you want to install it? (Y/n) " -n 1 should_install
+	echo ""
+
+	if [ "$should_install" != "y" ]; then
+		echo "Aborting"
+		return 1
+	fi
+
+	sudo pacman -S --needed stow
+}
+
+function print_copy_error() {
+	prev_ifs="$IFS"
+	IFS=$'\n'
+	for line in $1; do
+		group 1 "$line"
+	done
+	IFS="$prev_ifs"
+}
+
 function copy_configs() {
+	if [ "$dry_run" == "0" ] && ( ! ensure_stow_installed ); then
+		return 1
+	fi
+
     local config_path="$DEVENV_CONFIG_DIR/home"
 
     if [ ! -d $config_path ]; then
@@ -145,7 +174,15 @@ function copy_configs() {
     fi
     group_start 0 "Applying files from $(path "$config_path")"
 
-    copy_configs_recursive $config_path $config_path
+	group 1 "Running stow..."
+
+	stow_output="$(stow -R -d "$config_path" -t "$HOME" . 2>&1)"
+	if [[ -z $? ]]; then
+		group 1 "Done!"
+	else
+		group 1 "Error(s) occured during stow:"
+		print_copy_error "$stow_output"
+	fi
 
     group_end 0
 }
