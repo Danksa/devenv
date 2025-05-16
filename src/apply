@@ -88,54 +88,6 @@ function matches_filter() {
     return 1
 }
 
-function copy_config_file() {
-    local config_path="$1"
-    local file="$2"
-
-    group 1 "Applying $(path "~/$file")" -n
-
-    if [ "$dry_run" == "0" ]; then
-        target_directory=$(dirname "$HOME/$file")
-        if [ ! -d "$target_directory" ]; then
-            mkdir -p "$target_directory"
-        fi
-
-        copy_result=$(cp "$config_path/$file" "$HOME/$file" 2>&1)
-        if [ $? -ne 0 ]; then
-            tput setaf 1
-            echo " 🞪"
-            tput sgr0
-            group_end 0
-            exit_with_error "Error occured while copying: $copy_result"
-        fi    
-    fi
-
-    tput setaf 2
-    echo " 🗸"
-    tput sgr0
-}
-
-function copy_configs_recursive() {
-    local config_path="$1"
-    local current_path="$2"
-
-    pushd "$current_path" &> /dev/null
-    for entry in * .[^.]*; do
-        if [ -f "$entry" ]; then
-            relative_path=$(realpath -s --relative-to="$config_path" "$current_path/$entry")
-
-            if matches_filter "$relative_path"; then
-                copy_config_file "$config_path" "$relative_path"
-            else
-                group 1 "$(tput dim)Skipping $(path "~/$relative_path")"
-            fi
-        elif [ -d "$entry" ]; then
-            copy_configs_recursive $config_path "$current_path/$entry"
-        fi
-    done
-    popd &> /dev/null
-}
-
 function ensure_stow_installed() {
 	if pacman -Q stow &> /dev/null; then
 		return 0
@@ -179,6 +131,8 @@ function copy_configs() {
 	stow_output="$(stow -R -d "$config_path" -t "$HOME" . 2>&1)"
 	if [[ -z $? ]]; then
 		group 1 "Done!"
+	elif [[ -z "$stow_output" ]]; then
+		group 1 "Done, nothing to do!"
 	else
 		group 1 "Error(s) occured during stow:"
 		print_copy_error "$stow_output"
