@@ -5,7 +5,8 @@ function print_usage() {
     echo "Usage: $devenv_name <Command> [--help]"
     echo ""
     title "Available Commands:"
-    echo "- apply: Copies all config files to your home folder"
+	echo "- apply: Uses GNU stow to symlink all config files defined in $(path "\"$devenv_config_dir/home\"") to your home folder"
+	echo "- install: Installs the packages defined in $(path "\"$devenv_config_dir/packages\"")"
     echo ""
     title "Configuration"
     echo "All your configuration files are expected to reside in $(path "\"$devenv_config_dir\"")."
@@ -19,6 +20,7 @@ devenv_config_dir="$HOME/.config/devenv"
 
 declare -A commands
 commands[apply]="apply"
+commands[install]="install"
 
 selected_command=${1:-"--help"}
 

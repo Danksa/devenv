@@ -35,3 +35,17 @@ function group_end() {
     _group_prefix $1
     echo "└─"
 }
+
+function print_dry_run_message() {
+    local message="This is a dry run, nothing will be touched"
+    local length=${#message}
+
+    local horizontal_bar=$(yes "═" | head "-$length" | tr -d "\n")
+
+    tput setaf 1
+    echo "╔═${horizontal_bar}═╗"
+    echo "║ $message ║"
+    echo "╚═${horizontal_bar}═╝"
+    tput sgr0
+}
+

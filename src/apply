@@ -13,33 +13,6 @@ function ensure_env() {
     fi
 }
 
-function print_usage() {
-    echo "Usage: $DEVENV_NAME apply [--help] [--dry-run] [--install] [--all] [--filter=<NAMES>]"
-    echo ""
-    title "Summary"
-    echo "This command will apply your devenv configuration to your home directory."
-    echo ""
-    title "Options"
-    echo "--dry-run: Prints everything that would be done by running this command without actually doing anything."
-    echo "--help: Shows this page"
-    echo "--install: Install packages defined in $(path "\"$DEVENV_CONFIG_DIR/packages\""). This skips applying config files."
-    echo "--all: Will install packages as well as apply config files."
-    echo "--filter: Only apply configs which match given NAMES (comma-separated list)."
-}
-
-function print_dry_run_message() {
-    local message="This is a dry run, nothing will be touched"
-    local length=${#message}
-
-    local horizontal_bar=$(yes "═" | head "-$length" | tr -d "\n")
-
-    tput setaf 1
-    echo "╔═${horizontal_bar}═╗"
-    echo "║ $message ║"
-    echo "╚═${horizontal_bar}═╝"
-    tput sgr0
-}
-
 function has_option() {
     local option_name=$1
     if [ -z $option_name ]; then
@@ -57,35 +30,15 @@ function has_option() {
     echo '0'
 }
 
-function filter_option() {
-    local args="${@:1}"
-    for arg in $args; do
-        if [[ $arg == "--filter="* ]]; then
-            echo "${arg#--filter=}"
-            return 0
-        fi
-    done
+function print_usage() {
+    echo "Usage: $DEVENV_NAME apply [--help] [--dry-run] [--install] [--all] [--filter=<NAMES>]"
     echo ""
-}
-
-function matches_filter() {
-    if [ -z "$filter" ]; then
-        return 0
-    fi
-
-    local name="$1"
-
-    local prev_ifs="$IFS"
-    IFS=','
-    for term in $filter; do
-        if [[ $name == *"$term"* ]]; then
-            IFS="$prev_ifs"
-            return 0
-        fi
-    done
-    IFS="$prev_ifs"
-
-    return 1
+    title "Summary"
+    echo "This command will apply your devenv configuration to your home directory."
+    echo ""
+    title "Options"
+    echo "--dry-run: Prints everything that would be done by running this command without actually doing anything."
+    echo "--help: Shows this page"
 }
 
 function ensure_stow_installed() {
@@ -149,120 +102,12 @@ function copy_configs() {
     group_end 0
 }
 
-function install_package() {
-    local install_prefix="$1"
-    local package_manager="$2"
-    local package_name="$3"
-
-    if [ "$dry_run" == "1" ]; then
-        tput setaf 2
-        echo " 🗸"
-        tput sgr0
-        return 0
-    fi
-
-    $package_manager -Q $package_name &>/dev/null
-    if [ $? -eq 0 ]; then
-        tput setaf 2
-        echo " 🗸 (already installed)"
-        tput sgr0
-        return 0
-    fi
-
-    local install_result=$($install_prefix $package_manager -S --noconfirm --needed $package_name 2>&1)
-    if [ $? -eq 0 ]; then
-        tput setaf 2
-        echo " 🗸"
-        tput sgr0
-        return 0
-    else
-        tput setaf 1
-        echo " "
-        tput sgr0
-        group 2 "$(tput setaf 1)$install_result$(tput sgr0)"
-        return 1
-    fi
-}
-
-function install_packages_from_file() {
-    local package_file="$1"
-    local filename=$(basename $package_file)
-
-    group_start 1 "$filename"
-
-    local category=""
-
-    declare -A package_managers
-    package_managers[arch]="pacman"
-    package_managers[aur]="yay"
-
-    declare -A install_prefixes
-    install_prefixes[arch]="sudo"
-    install_prefixes[aur]=""
-
-    while IFS='' read -r line || [[ -n $line ]]; do
-        if [[ $line == \#* ]] || [[ -z $line ]]; then
-            continue
-        fi
-
-        if [[ $line == \[*\] ]]; then
-            _name=${line#"["}
-            _name=${_name%"]"}
-            category=$_name
-
-            if [[ ! -v package_managers[$category] ]]; then
-                group_end 1
-                group_end 0
-                exit_with_error "Unknown category \"$category\""
-            fi
-        elif [[ -z $category ]]; then
-            group 2 "$(tput setaf 3)Ignoring \"$line\" outside category$(tput sgr0)"
-        else
-            package_name="$line"
-            group 2 "Installing: $(tput setaf 4)$package_name$(tput sgr0)" -n
-
-            install_package "${install_prefixes[$category]}" "${package_managers[$category]}" "$package_name"
-            if [ $? -ne 0 ]; then
-                group_end 1
-                group_end 0
-                exit_with_error "Could not install package \"$package_name\""
-            fi
-        fi
-    done < $package_file
-
-    group_end 1
-}
-
-function install_packages() {
-    local packages_path="$DEVENV_CONFIG_DIR/packages"
-
-    if [ ! -d $packages_path ]; then
-        echo "The directory $(path "\"$packages_path\"") does not exist, no packages to install."
-        return 0
-    fi
-
-    group_start 0 "Installing packages from $(path "$packages_path")"
-
-    pushd "$packages_path" &> /dev/null
-    for entry in *; do
-        if [ -f "$entry" ]; then
-            install_packages_from_file "$packages_path/$entry"
-        fi
-    done
-
-    group_end 0
-    popd &> /dev/null
-}
-
 ensure_env "DEVENV_CONFIG_DIR"
 ensure_env "DEVENV_DIR"
 ensure_env "DEVENV_NAME"
 
 help=$(has_option "--help" $@)
 dry_run=$(has_option "--dry-run" $@)
-run_install=$(has_option "--install" $@)
-run_all=$(has_option "--all" $@)
-filter=$(filter_option $@)
 
 source "$DEVENV_DIR/formatting"
 
@@ -276,15 +121,9 @@ if [ ! -d "$DEVENV_CONFIG_DIR" ]; then
     exit 0
 fi
 
-
 if [ "$dry_run" == "1" ]; then
     print_dry_run_message
 fi
 
-if [ "$run_install" == "0" ] || [ "$run_all" == "1" ]; then
-    copy_configs
-fi
+copy_configs
 
-if [ "$run_install" == "1" ]; then
-    install_packages
-fi
