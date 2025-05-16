@@ -128,11 +128,19 @@ function copy_configs() {
 
 	group 1 "Running stow..."
 
-	stow_output="$(stow -R -d "$config_path" -t "$HOME" . 2>&1)"
+	stow_params=""
+	if [ "$dry_run" == "1" ]; then
+		stow_params="--simulate"
+	fi
+
+	stow_output="$(stow $stow_params -R -d "$config_path" -t "$HOME" . 2>&1)"
 	if [[ -z $? ]]; then
 		group 1 "Done!"
 	elif [[ -z "$stow_output" ]]; then
 		group 1 "Done, nothing to do!"
+	elif [ "$dry_run" == "1" ]; then
+		group 1 "Done! Stow dry run output:"
+		print_copy_error "$stow_output"
 	else
 		group 1 "Error(s) occured during stow:"
 		print_copy_error "$stow_output"
